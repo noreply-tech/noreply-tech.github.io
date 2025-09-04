@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Registro De Comprovantes CNH</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #f0f4f8, #d9e2ec);
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      padding: 30px 20px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #333;
+      font-size: 1.5rem;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #555;
+    }
+    input[type="text"],
+    input[type="datetime-local"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    input[type="file"] {
+      padding: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background-color: #0078D4;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #005ea2;
+    }
+    #status {
+      margin-top: 15px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #0078D4;
+    }
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px 15px;
+      }
+      h2 {
+        font-size: 1.3rem;
+      }
+      button {
+        font-size: 0.95rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registros De Comprovantes</h2>
+    <form id="formulario">
+      <input type="hidden" name="id" id="id" />
+      <input type="hidden" name="timestamp" id="timestamp" />
+
+      <label for="nome">Nome do Motorista:</label>
+      <input type="text" name="nome" id="nome" required />
+
+      <label for="cliente">Cliente:</label>
+      <input type="text" name="cliente" id="cliente" list="clientes" required />
+      <datalist id="clientes">
+        <option value="ACG do Brasil S/A.">
+        <option value="AGRANA FRUIT BRASIOL IND. COM.">
+        <option value="ALVIM LINGERIE LTDA.">
+        <option value="Arcos Forjados Exp. Imp. Ind. Com - Eireli">
+        <option value="Batnardo Com. Imp. E Exp. De Baterias Ltda - ME">
+        <option value="BWR COM. IMP. E EXP. DE VINHOS EIRELI">
+        <option value="CNH INDUSTRIAL BRASIL LTDA - Curitiba">
+        <option value="CNH INDUSTRIAL BRASIL LTDA - Piracicaba">
+        <option value="CNH INDUSTRIAL BRASIL LTDA - Sorocaba">
+        <option value="CNH INDUSTRIAL BRASIL LTDA - SOROCABA DPR - 27-11">
+        <option value="CNH * ON-HIGHWAY BRASIL LTDA. - SOROCABA - 06-20">
+        <option value="Grande Estoque Com. Ltda.">
+        <option value="ICASA IND. CERAMICA ANDRADENSE S.A.">
+        <option value="IST QUIMICA">
+        <option value="PARAMOTOS IND COM IMP E EXP">
+        <option value="POSITIVE BRANDS IND. COM. LTDA.">
+        <option value="Stabilus Ltda.">
+        <option value="TRANSDRU // CNH DO BRASIL">
+        <option value="Union Agro S/A.">
+        <option value="Unifi do Brasil Ltda - 03-15">
+        <option value="Unifi do Brasil Ltda - 07-49">
+      </datalist>
+
+      <label for="foto">Foto:</label>
+      <input type="file" id="foto" accept="image/*" capture="environment" required />
+
+      <button type="submit">Enviar</button>
+      <p id="status"></p>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('formulario');
+    const status = document.getElementById('status');
+    const clienteInput = document.getElementById('cliente');
+    const idInput = document.getElementById('id');
+    const timestampInput = document.getElementById('timestamp');
+
+    // ✅ Usa hora local do navegador (já é horário de Brasília)
+    function getBrasiliaTimestamp() {
+      const agora = new Date();
+
+      const year = agora.getFullYear();
+      const month = String(agora.getMonth() + 1).padStart(2, '0');
+      const day = String(agora.getDate()).padStart(2, '0');
+      const hours = String(agora.getHours()).padStart(2, '0');
+      const minutes = String(agora.getMinutes()).padStart(2, '0');
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+
+    // Preenche o timestamp ao carregar a página
+    timestampInput.value = getBrasiliaTimestamp();
+
+    // Atualiza o campo ID com o valor do cliente
+    clienteInput.addEventListener('input', () => {
+      const clienteValor = clienteInput.value.trim();
+      idInput.value = clienteValor;
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData(form);
+      const fileInput = document.getElementById('foto');
+      let base64Image = "";
+
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        base64Image = await toBase64(file);
+      }
+
+      const data = {
+        id: formData.get('id'),
+        timestamp: formData.get('timestamp'),
+        nome: formData.get('nome').trim(),
+        cliente: formData.get('cliente').trim(),
+        foto: base64Image
+      };
+
+      fetch("https://script.google.com/macros/s/AKfycbwQEVR8wM14m2TWkvkUikEv2zwjZtBux3KGaKWFhfCoutFZi5wlooVBy-1fqKO_je7bWw/exec", {
+        method: "POST",
+        body: new URLSearchParams(data)
+      })
+      .then(res => res.text())
+      .then(text => {
+        status.textContent = "✅ " + "Registrado Com Sucesso !" + "✅ " ;
+        form.reset();
+        timestampInput.value = getBrasiliaTimestamp(); // Recarrega hora local
+        idInput.value = "";
+      })
+      .catch(err => {
+        status.textContent = "❌ Erro: " + err;
+      });
+    });
+
+    // Converte imagem para base64
+    function toBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = error => reject(error);
+        reader.readAsDataURL(file);
+      });
+    }
+  </script>
+</body>
+</html>
